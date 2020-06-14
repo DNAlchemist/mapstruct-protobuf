@@ -1,0 +1,34 @@
+plugins {
+    id 'java-library'
+    id "one.chest.maven-publish-plugin" version "0.0.2"
+}
+
+repositories {
+    jcenter()
+}
+
+publish {
+    repository {
+        url "http://nexus.service.consul/repository/maven-releases"
+        username System.getenv().MAVEN_USERNAME
+        password System.getenv().MAVEN_PASSWORD
+    }
+}
+
+repositories {
+    jcenter()
+    maven {
+        url "http://nexus.service.consul/repository/maven-releases"
+    }
+}
+
+dependencies {
+    implementation 'org.mapstruct:mapstruct:1.3.0.Final'
+    implementation 'org.mapstruct:mapstruct-processor:1.3.0.Final'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.5.2'
+}
+
+test {
+    useJUnitPlatform()
+}
