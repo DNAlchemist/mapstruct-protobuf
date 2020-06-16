@@ -1,3 +1,5 @@
+# mapstruct-protobuf
+
 Plugin for automatic exclusion of generated protobuf fields and methods.
 
 ## Installation
