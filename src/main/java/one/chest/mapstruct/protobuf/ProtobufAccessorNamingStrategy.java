@@ -20,21 +20,16 @@ package one.chest.mapstruct.protobuf;
 import org.mapstruct.ap.internal.util.Nouns;
 import org.mapstruct.ap.spi.DefaultAccessorNamingStrategy;
 import org.mapstruct.ap.spi.MapStructProcessingEnvironment;
-import org.mapstruct.ap.spi.util.IntrospectorUtils;
 
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import java.util.List;
 
 import static one.chest.mapstruct.protobuf.ProtobufGeneratedMethods.*;
 
 public class ProtobufAccessorNamingStrategy extends DefaultAccessorNamingStrategy {
 
-    public static final String PROTOBUF_MESSAGE_LITE_OR_BUILDER = "com.google.protobuf.MessageLiteOrBuilder";
     private TypeMirror protobufMessageLiteOrBuilderType;
 
     @Override
@@ -75,7 +70,7 @@ public class ProtobufAccessorNamingStrategy extends DefaultAccessorNamingStrateg
         if (isInternalMethodCommon(method)) {
             return false;
         }
-        return super.isAdderMethod(method);
+        return ProtobufGeneratedMethods.isAdderMethod(method) && super.isAdderMethod(method);
     }
 
     @Override
@@ -99,41 +94,8 @@ public class ProtobufAccessorNamingStrategy extends DefaultAccessorNamingStrateg
 
     @Override
     public String getPropertyName(ExecutableElement method) {
-        String methodName = method.getSimpleName().toString();
-        if (isGetList(method) || isSetList(method)) {
-            Element receiver = method.getEnclosingElement();
-            if (receiver != null && (receiver.getKind() == ElementKind.CLASS || receiver.getKind() == ElementKind.INTERFACE)) {
-                if (isProtobufGeneratedMessage((TypeElement) receiver)) {
-                    return IntrospectorUtils.decapitalize(methodName.substring(3, methodName.length() - 4));
-                }
-            }
-        }
-        return super.getPropertyName(method);
-
-    }
-
-    private boolean isProtobufGeneratedMessage(TypeElement type) {
-        List<? extends TypeMirror> interfaces = type.getInterfaces();
-
-        if (interfaces != null) {
-            for (TypeMirror i : interfaces) {
-                if (i.toString().startsWith(PROTOBUF_MESSAGE_LITE_OR_BUILDER)) {
-                    return true;
-                } else if (i instanceof DeclaredType) {
-                    Element element = ((DeclaredType) i).asElement();
-                    if (isProtobufGeneratedMessage((TypeElement) element)) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        TypeMirror typeMirror = type.getSuperclass();
-        if (typeMirror instanceof DeclaredType) {
-            Element element = ((DeclaredType) typeMirror).asElement();
-            return isProtobufGeneratedMessage((TypeElement) element);
-        }
-        return false;
+        String propertyName = ProtobufGeneratedMethods.getPropertyName(method);
+        return propertyName == null ? super.getPropertyName(method) : propertyName;
     }
 
 }
