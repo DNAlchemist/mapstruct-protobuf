@@ -17,13 +17,21 @@
  */
 package one.chest.mapstruct.protobuf;
 
+import org.mapstruct.ap.spi.util.IntrospectorUtils;
+
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 class ProtobufGeneratedMethods {
+
+    public static final String PROTOBUF_MESSAGE_LITE_OR_BUILDER = "com.google.protobuf.MessageLiteOrBuilder";
 
     private static final List<String> PROTOBUF_GENERATED_METHOD_SUFFIX = Arrays.asList(
             "Count",
@@ -37,10 +45,13 @@ class ProtobufGeneratedMethods {
             "clear",
             "mutable",
             "getMutable",
-            "merge",
+            "merge"
+    );
+
+    private static final List<String> ADDER_PREFIXES = Collections.singletonList(
             "putAll"
     );
-    
+
     private static final List<String> PROTOBUF_GENERATED_BUILDER_SUFFIX = Arrays.asList("OrBuilder", "BuilderList");
 
     public static final String PROTOBUF_STRING_LIST_TYPE = "com.google.protobuf.ProtocolStringList";
@@ -80,6 +91,44 @@ class ProtobufGeneratedMethods {
 
     public static boolean isInternalMethodCommon(ExecutableElement method) {
         return COMMON.contains(String.valueOf(method.getSimpleName()));
+    }
+
+    public static boolean isAdderMethod(ExecutableElement method) {
+        String methodName = String.valueOf(method.getSimpleName());
+        for (String adderPrefix : ADDER_PREFIXES) {
+            if (methodName.endsWith(adderPrefix)) {
+                String propertyMethod = IntrospectorUtils.decapitalize(methodName.substring(adderPrefix.length()));
+                if (isPropertyMethodExists(method, propertyMethod)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static String getPropertyName(ExecutableElement method) {
+        String methodName = method.getSimpleName().toString();
+        if (isGetList(method) || isSetList(method)) {
+            Element receiver = method.getEnclosingElement();
+            if (receiver != null && (receiver.getKind() == ElementKind.CLASS || receiver.getKind() == ElementKind.INTERFACE)) {
+                if (isProtobufGeneratedMessage((TypeElement) receiver)) {
+                    //FIXME refactor this magic expression
+                    return IntrospectorUtils.decapitalize(methodName.substring(3, methodName.length() - 4));
+                }
+            }
+        }
+        for (String adderPrefix : ADDER_PREFIXES) {
+            if (methodName.startsWith(adderPrefix)) {
+                Element receiver = method.getEnclosingElement();
+                if (receiver != null && (receiver.getKind() == ElementKind.CLASS || receiver.getKind() == ElementKind.INTERFACE)) {
+                    if (isProtobufGeneratedMessage((TypeElement) receiver)) {
+                        return IntrospectorUtils.decapitalize(methodName.substring(adderPrefix.length()));
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     public static boolean isInternalMethod(ExecutableElement method) {
@@ -137,6 +186,30 @@ class ProtobufGeneratedMethods {
 
     public static boolean isListType(TypeMirror t) {
         return t.toString().startsWith(List.class.getCanonicalName()) || t.toString().startsWith(PROTOBUF_STRING_LIST_TYPE);
+    }
+
+    public static boolean isProtobufGeneratedMessage(TypeElement type) {
+        List<? extends TypeMirror> interfaces = type.getInterfaces();
+
+        if (interfaces != null) {
+            for (TypeMirror i : interfaces) {
+                if (i.toString().startsWith(PROTOBUF_MESSAGE_LITE_OR_BUILDER)) {
+                    return true;
+                } else if (i instanceof DeclaredType) {
+                    Element element = ((DeclaredType) i).asElement();
+                    if (isProtobufGeneratedMessage((TypeElement) element)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        TypeMirror typeMirror = type.getSuperclass();
+        if (typeMirror instanceof DeclaredType) {
+            Element element = ((DeclaredType) typeMirror).asElement();
+            return isProtobufGeneratedMessage((TypeElement) element);
+        }
+        return false;
     }
 
 }
