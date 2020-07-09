@@ -128,6 +128,7 @@ class ProtobufGeneratedMethods {
         if (receiver != null && (receiver.getKind() == ElementKind.CLASS || receiver.getKind() == ElementKind.INTERFACE)) {
             return isProtobufGeneratedMessage((TypeElement) receiver);
         }
+        return false;
     }
 
     public static boolean isInternalMethod(ExecutableElement method) {
