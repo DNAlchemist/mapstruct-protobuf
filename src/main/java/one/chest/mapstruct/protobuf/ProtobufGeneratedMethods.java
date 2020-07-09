@@ -26,7 +26,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 class ProtobufGeneratedMethods {
@@ -48,8 +47,11 @@ class ProtobufGeneratedMethods {
             "merge"
     );
 
-    private static final List<String> ADDER_PREFIXES = Collections.singletonList(
-            "putAll"
+    private static final List<String> ADDER_PREFIXES = Arrays.asList(
+            "putAll",
+            "put",
+            "addAll",
+            "add"
     );
 
     private static final List<String> PROTOBUF_GENERATED_BUILDER_SUFFIX = Arrays.asList("OrBuilder", "BuilderList");
