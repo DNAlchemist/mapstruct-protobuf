@@ -110,17 +110,24 @@ class ProtobufGeneratedMethods {
 
     public static String getPropertyName(ExecutableElement method) {
         String methodName = method.getSimpleName().toString();
+        if ((methodName.startsWith("get") || methodName.startsWith("set")) && methodName.endsWith("List")) {
+            methodName = methodName.substring(3);
+            methodName = methodName.substring(0, methodName.length() - "List".length());
+            return IntrospectorUtils.decapitalize(methodName);
+        }
         for (String adderPrefix : ADDER_PREFIXES) {
             if (methodName.startsWith(adderPrefix)) {
-                Element receiver = method.getEnclosingElement();
-                if (receiver != null && (receiver.getKind() == ElementKind.CLASS || receiver.getKind() == ElementKind.INTERFACE)) {
-                    if (isProtobufGeneratedMessage((TypeElement) receiver)) {
-                        return IntrospectorUtils.decapitalize(methodName.substring(adderPrefix.length()));
-                    }
-                }
+                return IntrospectorUtils.decapitalize(methodName.substring(adderPrefix.length()));
             }
         }
         return null;
+    }
+
+    public static boolean isProtobuf(ExecutableElement method) {
+        Element receiver = method.getEnclosingElement();
+        if (receiver != null && (receiver.getKind() == ElementKind.CLASS || receiver.getKind() == ElementKind.INTERFACE)) {
+            return isProtobufGeneratedMessage((TypeElement) receiver);
+        }
     }
 
     public static boolean isInternalMethod(ExecutableElement method) {

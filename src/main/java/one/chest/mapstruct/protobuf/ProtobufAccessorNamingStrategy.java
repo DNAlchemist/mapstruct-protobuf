@@ -94,7 +94,10 @@ public class ProtobufAccessorNamingStrategy extends DefaultAccessorNamingStrateg
 
     @Override
     public String getPropertyName(ExecutableElement method) {
-        String propertyName = ProtobufGeneratedMethods.getPropertyName(method);
+        String propertyName = null;
+        if (ProtobufGeneratedMethods.isProtobuf(method)) {
+            propertyName = ProtobufGeneratedMethods.getPropertyName(method);
+        }
         return propertyName == null ? super.getPropertyName(method) : propertyName;
     }
 
