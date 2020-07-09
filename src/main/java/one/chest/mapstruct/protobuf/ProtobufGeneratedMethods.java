@@ -110,15 +110,6 @@ class ProtobufGeneratedMethods {
 
     public static String getPropertyName(ExecutableElement method) {
         String methodName = method.getSimpleName().toString();
-        if (isGetList(method) || isSetList(method)) {
-            Element receiver = method.getEnclosingElement();
-            if (receiver != null && (receiver.getKind() == ElementKind.CLASS || receiver.getKind() == ElementKind.INTERFACE)) {
-                if (isProtobufGeneratedMessage((TypeElement) receiver)) {
-                    //FIXME refactor this magic expression
-                    return IntrospectorUtils.decapitalize(methodName.substring(3, methodName.length() - 4));
-                }
-            }
-        }
         for (String adderPrefix : ADDER_PREFIXES) {
             if (methodName.startsWith(adderPrefix)) {
                 Element receiver = method.getEnclosingElement();
@@ -129,7 +120,6 @@ class ProtobufGeneratedMethods {
                 }
             }
         }
-
         return null;
     }
 
